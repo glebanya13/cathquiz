@@ -15,11 +15,16 @@ export default {
     actions: {
         ADD_QUIZ({ commit }, quiz) {
             let ref = quiz.id ? Vue.$db.collection('quizzes').doc(quiz.id) : Vue.$db.collection('quizzes').doc()
+            // let qref = ref.collection('questions')
+            // console.log(qref)
             ref.set({
                 title: quiz.title,
                 time: quiz.time,
                 questionTime: quiz.questionTime
             }, { merge: true })
+            // qref.set({
+
+            // })
                 .then((res) => {
                     console.log(res)
 

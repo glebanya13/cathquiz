@@ -8,7 +8,7 @@
             <v-spacer></v-spacer>
           </v-toolbar>
           <v-card-text>
-            <v-alert type="error" v-if="error">{{ error }}</v-alert>
+            <v-alert type="error" v-if="GET_ERROR">{{ GET_ERROR }}</v-alert>
 
             <v-form v-model="valid">
               <v-text-field
@@ -40,7 +40,7 @@
               color="#8A2BE2"
               dark
               @click.prevent="signup()"
-              :disabled="processing || !valid"
+              :disabled="!valid"
               >Подтвердить</v-btn
             >
           </v-card-actions>
@@ -51,6 +51,7 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
 export default {
   data() {
     return {
@@ -70,13 +71,7 @@ export default {
     };
   },
   computed: {
-    processing() {
-      return this.$store.getters.getProcessing;
-    },
-    error() {
-      let e = this.$store.getters.getError;
-      return e;
-    },
+    ...mapGetters(['GET_ERROR']),
     isUserAuthenticated() {
       return this.$store.getters.isUserAuthenticated;
     },
