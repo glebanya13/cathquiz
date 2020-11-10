@@ -5,7 +5,7 @@ import Reg from '../views/Reg.vue';
 import Login from '../views/Login.vue';
 import Admin from '../views/Admin.vue';
 import QuizList from '../views/QuizList.vue';
-import Quiz from '../components/Quiz.vue';
+import Quiz from '../views/Quiz.vue';
 
 Vue.use(VueRouter);
 
@@ -31,7 +31,7 @@ const routes = [
     component: Admin
   },
   {
-    path: '/quiz',
+    path: '/quiz/:id',
     name: 'quiz',
     component: Quiz
   },
