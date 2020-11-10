@@ -4,6 +4,7 @@ import Home from '../views/Home.vue';
 import Reg from '../views/Reg.vue';
 import Login from '../views/Login.vue';
 import Admin from '../views/Admin.vue';
+import QuizList from '../views/QuizList.vue';
 import Quiz from '../components/Quiz.vue';
 
 Vue.use(VueRouter);
@@ -33,6 +34,11 @@ const routes = [
     path: '/quiz',
     name: 'quiz',
     component: Quiz
+  },
+  {
+    path: '/quizlist',
+    name: 'QuizList',
+    component: QuizList
   },
 ];
 

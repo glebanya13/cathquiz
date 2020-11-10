@@ -1,7 +1,7 @@
 <template>
   <v-container fluid>
     <v-layout column>
-      <v-btn to="/quiz">Создать квиз</v-btn>
+      <v-btn to="/quizlist">Создать квиз</v-btn>
     </v-layout>
   </v-container>
 </template>
