@@ -21,26 +21,20 @@ export default {
     },
     actions: {
         SIGNUP({ commit }, payload) {
-            commit('SET_PROCESSING', true);
             commit('CLEAR_ERROR');
             firebase.auth().createUserWithEmailAndPassword(payload.email, payload.password)
                 .then(() => {
-                    commit('SET_PROCESSING', false);
                 })
                 .catch(function (error) {
-                    commit('SET_PROCESSING', false);
                     commit('SET_ERROR', error);
                     throw error;
                 });
         },
         SIGNIN({ commit }, payload) {
-            commit('SET_PROCESSING', true);
             firebase.auth().signInWithEmailAndPassword(payload.email, payload.password)
                 .then(() => {
-                    commit('SET_PROCESSING', false);
                 })
                 .catch(function (error) {
-                    commit('SET_PROCESSING', false);
                     commit('SET_ERROR', error);
                     throw error;
                 });
