@@ -1,7 +1,9 @@
 <template>
   <div>
     <v-app-bar app color="#8A2BE2" dark>
-      <v-toolbar-title>Cathquiz</v-toolbar-title>
+       <router-link to="/admin" tag="span" style="cursor: pointer">
+        <v-toolbar-title>Cathquiz</v-toolbar-title> 
+      </router-link>
       <v-spacer></v-spacer>
       <v-toolbar-items>
         <v-btn @click="signout()">Выход</v-btn>

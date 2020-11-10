@@ -4,7 +4,7 @@
       <v-btn to="/quizlist">Создать квиз</v-btn>
       <v-card>
         <v-list>
-          <v-list-item v-for="item in QUIZ_LIST" :key="item.title">
+          <v-list-item v-for="item in QUIZ_LIST" :key="item.title + item.id">
             <v-row>
               <v-col cols="8">{{item.title}}</v-col>
               <v-col cols="2"><v-btn @click="select(item)">Select</v-btn></v-col>

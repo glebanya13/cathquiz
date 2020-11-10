@@ -6,6 +6,8 @@ import Login from '../views/Login.vue';
 import Admin from '../views/Admin.vue';
 import QuizList from '../views/QuizList.vue';
 import Quiz from '../views/Quiz.vue';
+import Session from '../views/Session.vue';
+import Play from '../views/Play.vue';
 
 Vue.use(VueRouter);
 
@@ -34,6 +36,16 @@ const routes = [
     path: '/quiz/:id',
     name: 'quiz',
     component: Quiz
+  },
+  {
+    path: '/quiz/:quizId/session/:sessionId',
+    name: 'session',
+    component: Session
+  },
+  {
+    path: '/quiz/:quizId/play/:sessionId',
+    name: 'play',
+    component: Play
   },
   {
     path: '/quizlist',
