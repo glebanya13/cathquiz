@@ -222,7 +222,10 @@ export default {
         });
     },
     verifyOtp() {
-      if (this.phNo.length != 12 || this.otp.length != 6) {
+      // todo не хорошо делать 2 разные проверки в одном методе
+      console.log(this.phNo.length)
+      console.log(this.otp.length)
+      if (this.phNo.length != 13 || this.otp.length != 6) {
         alert("Неверный формат номера телефона / кода!");
       } else {
         var code = this.otp;
