@@ -170,8 +170,13 @@ export default {
         },
         ADD_QUIZ({ commit }, quiz) {
             let ref = quiz.id ? Vue.$db.collection('quizzes').doc(quiz.id) : Vue.$db.collection('quizzes').doc()
-            // let qref = ref.collection('questions')
+           console.log(quiz.id)
+            // let qref
+            // if(quiz.questions){
+            //     qref = Vue.$db.collection(`quizzes/${quiz.id}/questions`)
+            // }
             // console.log(qref)
+           
             ref.set({
                 title: quiz.title,
                 time: quiz.time,

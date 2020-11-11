@@ -48,22 +48,31 @@
             </v-stepper-content>
 
             <v-stepper-content step="2">
-              <h2>Добавление вопросов:</h2>
+              <h2>
+                Добавление вопросов:
+                <v-icon @click="addQuestions()">add</v-icon>
+              </h2>
+
               <br />
-              <v-icon @click="addQuestions()">add</v-icon>
               <div v-for="question in questions" :key="question.qid">
                 <v-row>
-                  <v-col cols="12">
+                  <v-col cols="12" sm="6">
                     <v-text-field
                       :placeholder="`Вопрос ${question.qid}`"
                       v-model="question.question"
                       >{{ question.question }}</v-text-field
                     >
+                    <v-icon @click="addQuestions()">add</v-icon>
+                  </v-col>
+                  <v-col sm="6" class="mt-6">
                     <v-icon @click="addAnswers(question)">add</v-icon>
                   </v-col>
 
                   <div v-for="answer in answers" :key="answer.aid">
-                    <v-card v-if="answer.questionId == question.qid">
+                    <v-card
+                      v-if="answer.questionId == question.qid"
+                      class="ml-2"
+                    >
                       <v-card-text>
                         <v-text-field placeholder="Ответ">{{
                           answer.text
@@ -71,9 +80,7 @@
                         <v-text-field placeholder="Correct">{{
                           answer.correct
                         }}</v-text-field>
-                        <v-icon @click="deleteAnswer(answer.aid)"
-                          >delete</v-icon
-                        >
+                        <v-icon @click="deleteAnswer(answer)">delete</v-icon>
                       </v-card-text>
                     </v-card>
                   </div>
@@ -82,7 +89,7 @@
                 <v-icon @click="deleteQuestion(question)">delete</v-icon>
               </div>
 
-              <v-btn color="#8A2BE2" dark @click="addQuest()"> Continue </v-btn>
+              <v-btn color="#8A2BE2" dark @click="addQuiz()"> Continue </v-btn>
 
               <v-btn text> Cancel </v-btn>
             </v-stepper-content>
@@ -124,7 +131,7 @@ export default {
     ...mapGetters(["QUIZ_LIST"]),
   },
   methods: {
-    ...mapActions(["LOAD_QUIZZES", "ADD_QUIZ"]),
+    ...mapActions(["LOAD_QUIZZES", "ADD_QUIZ", "ADD_QUESTIONS"]),
     addOrUpdate(item) {
       console.log(item.quantity);
       this.currentQuiz = item ? item : {};
@@ -135,19 +142,18 @@ export default {
         title: this.currentQuiz.title,
         time: this.currentQuiz.time,
         questionTime: this.currentQuiz.questionTime,
+        questions: this.questions
       });
       this.step = 2;
     },
     deleteQuestion(question) {
-      this.deleteAnswer(question);
+      console.log(question.qid);
+      let a = this.answers.filter((a) => a.questionId == question.qid);
+      this.answers.splice(this.answers.indexOf(a), a.length);
       this.questions.splice(this.questions.indexOf(question), 1);
     },
-    deleteAnswer(question, answer) {
-      // if(question.qid){
-      //   let x = this.answers.filter(a => a.questionId == question.qid)
-      //   this.answers.splice(this.answers.indexOf(x), x)
-      // }
-      this.answers.splice(this.answers.indexOf(answer), 1);
+    deleteAnswer(parametr) {
+      this.answers.splice(this.answers.indexOf(parametr), 1);
     },
     addQuestions() {
       this.questions.push({
@@ -159,16 +165,12 @@ export default {
     addAnswers(question) {
       this.answers.push({
         questionId: question.qid,
-        aid: 1 + Math.max(0, ...this.answers.map((n) => n.aid)),
         text: "",
         correct: null,
       });
     },
-    addQuest() {
-      this.step = 3;
-      this.ADD_QUIZ({
-        questions: this.questions,
-      });
+    dada() {
+      console.log(this.currentQuiz.id);
     },
   },
   created() {
@@ -177,6 +179,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-</style>
