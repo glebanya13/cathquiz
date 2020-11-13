@@ -16,8 +16,12 @@
             }}
           </v-card-subtitle>
           <v-card-text>
-            Quiz: {{ CURRENT_QUIZ }} <br /><br />
-            Session: {{ CURRENT_SESSION }}
+            <v-list>
+              <v-list-item v-for="p in SESSION_PARTICIPANTS" :key="p.name">
+                {{ p.name }} ответил {{ p.answers ? p.answers.length : 0 }} вопросов. Из них
+                {{ p.answers ? p.answers.filter(a => a.correct).length : 0 }} правильно
+              </v-list-item>
+            </v-list>
           </v-card-text>
           <v-card-actions>
             <v-btn @click="start()" text>Start</v-btn>
@@ -26,39 +30,40 @@
         </v-card></v-col
       >
     </v-row>
-    <v-row>
-      <v-col>
-        <v-card>
-          <v-card-title>Participants and Progress</v-card-title>
-          <v-card-text>
-            <v-list>
-              <v-list-item
-                v-for="p in CURRENT_SESSION.participants"
-                :key="p.name"
-              >
-                {{ p.name }} ответил {{ p.currentQuestion }} вопросов. Из них
-                {{ p.score }} правильно
-              </v-list-item>
-            </v-list>
-          </v-card-text>
-        </v-card></v-col
-      >
-    </v-row>
   </v-container>
 </template>
 <script>
-import { mapGetters, mapActions } from "vuex";
+import { mapGetters, mapActions, mapMutations } from "vuex";
 export default {
   data() {
     return {};
   },
   computed: {
-    ...mapGetters(["CURRENT_QUIZ", "CURRENT_SESSION"]),
+    ...mapGetters(["CURRENT_QUIZ", "CURRENT_SESSION", "SESSION_PARTICIPANTS"]),
+    participants() {
+      let ps = this.SESSION_PARTICIPANTS || [];
+      return ps.length == 0 ? [] : ps.sort(
+        (a, b) =>
+          a.answers.filter((an) => an.correct).length >
+          b.answers.filter((ba) => ba.correct).length
+      );
+    },
   },
   methods: {
-    ...mapActions(["GET_QUIZ", "GET_SESSION", "START_QUIZ", "STOP_QUIZ"]),
+    ...mapMutations(['EXIT_PARTICIPANTS_FOLLOWING']),
+    ...mapActions([
+      "GET_QUIZ",
+      "GET_SESSION",
+      "START_QUIZ",
+      "STOP_QUIZ",
+      "START_FOLLOW_PARTICIPANTS",
+    ]),
     start() {
       this.START_QUIZ({
+        quizId: this.$route.params.quizId,
+        sessionId: this.$route.params.sessionId,
+      });
+      this.START_FOLLOW_PARTICIPANTS({
         quizId: this.$route.params.quizId,
         sessionId: this.$route.params.sessionId,
       });
@@ -68,6 +73,7 @@ export default {
         quizId: this.$route.params.quizId,
         sessionId: this.$route.params.sessionId,
       });
+      this.EXIT_PARTICIPANTS_FOLLOWING()
     },
   },
   created() {
