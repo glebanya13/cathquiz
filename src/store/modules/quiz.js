@@ -214,25 +214,27 @@ export default {
         },
         ADD_QUIZ({ commit }, quiz) {
             let ref = quiz.id ? Vue.$db.collection('quizzes').doc(quiz.id) : Vue.$db.collection('quizzes').doc()
-            console.log(quiz.id)
-            // let qref
-            // if(quiz.questions){
-            //     qref = Vue.$db.collection(`quizzes/${quiz.id}/questions`)
-            // }
-            // console.log(qref)
 
             ref.set({
                 title: quiz.title,
                 time: quiz.time,
                 questionTime: quiz.questionTime
             }, { merge: true })
-                // qref.set({
 
-                // })
-                .then((res) => {
-                    console.log(res)
 
-                    // TODO добавить вопросы в коллекцию
+                .then(() => {
+                    let key = ref.id
+                    let qref = Vue.$db.collection(`quizzes/${key}/questions`)
+
+                    let questions = quiz.questions
+                    questions.forEach((q) => {
+                        console.log(q)
+                        qref.add({
+                            question: q.question,
+                            type: q.type,
+                            answers: q.answers
+                        }, { merge: true })
+                    })
                 })
                 .catch((e) => {
                     commit('SET_ERROR', e);

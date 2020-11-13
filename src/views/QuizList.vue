@@ -42,7 +42,7 @@
                 v-model="currentQuiz.questionTime"
                 label="Время на вопрос"
               ></v-text-field>
-              <v-btn color="#8A2BE2" dark @click="addQuiz()"> Continue </v-btn>
+              <v-btn color="#8A2BE2" dark @click="step = 2"> Continue </v-btn>
 
               <v-btn text @click="step = 2"> Cancel </v-btn>
             </v-stepper-content>
@@ -54,11 +54,11 @@
               </h2>
 
               <br />
-              <div v-for="question in questions" :key="question.qid">
+              <div v-for="question in questions" :key="question">
                 <v-row>
                   <v-col cols="12" sm="6">
                     <v-text-field
-                      :placeholder="`Вопрос ${question.qid}`"
+                      placeholder="Вопрос"
                       v-model="question.question"
                       >{{ question.question }}</v-text-field
                     >
@@ -68,18 +68,22 @@
                     <v-icon @click="addAnswers(question)">add</v-icon>
                   </v-col>
 
-                  <div v-for="answer in answers" :key="answer.aid">
+                  <div v-for="answer in answers" :key="answer">
                     <v-card
-                      v-if="answer.questionId == question.qid"
                       class="ml-2"
+                      v-if="answer.questionId == question.qid"
                     >
                       <v-card-text>
-                        <v-text-field placeholder="Ответ">{{
-                          answer.text
-                        }}</v-text-field>
-                        <v-text-field placeholder="Correct">{{
-                          answer.correct
-                        }}</v-text-field>
+                        <v-text-field
+                          placeholder="Ответ"
+                          v-model="answer.text"
+                          >{{ answer.text }}</v-text-field
+                        >
+                        <v-text-field
+                          placeholder="Correct"
+                          v-model="answer.correct"
+                          >answer.correct</v-text-field
+                        >
                         <v-icon @click="deleteAnswer(answer)">delete</v-icon>
                       </v-card-text>
                     </v-card>
@@ -109,9 +113,7 @@
         </v-stepper>
       </div>
     </v-card-text>
-    <v-card-actions>
-      <v-btn @click="questionsCollection()">Добавить</v-btn>
-    </v-card-actions>
+    <v-card-actions> </v-card-actions>
   </v-card>
 </template>
 
@@ -142,18 +144,23 @@ export default {
         title: this.currentQuiz.title,
         time: this.currentQuiz.time,
         questionTime: this.currentQuiz.questionTime,
-        questions: this.questions
+        questions: this.questions,
       });
       this.step = 2;
     },
     deleteQuestion(question) {
-      console.log(question.qid);
-      let a = this.answers.filter((a) => a.questionId == question.qid);
-      this.answers.splice(this.answers.indexOf(a), a.length);
+      this.deleteAnswer(question)
+      
       this.questions.splice(this.questions.indexOf(question), 1);
     },
     deleteAnswer(parametr) {
+      console.log(parametr)
+      if(parametr.qid){
+        let a = this.answers.filter((a) => a.questionId == parametr.qid);
+        this.answers.splice(this.answers.indexOf(a), a.length);
+      }else{
       this.answers.splice(this.answers.indexOf(parametr), 1);
+      }
     },
     addQuestions() {
       this.questions.push({
@@ -163,14 +170,14 @@ export default {
       });
     },
     addAnswers(question) {
-      this.answers.push({
+      let answers = this.answers;
+      answers.push({
         questionId: question.qid,
         text: "",
-        correct: null,
+        correct: "",
       });
-    },
-    dada() {
-      console.log(this.currentQuiz.id);
+      let a = answers.filter((a) => a.questionId == question.qid);
+      question.answers = a;
     },
   },
   created() {
