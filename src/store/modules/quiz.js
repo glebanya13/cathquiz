@@ -6,8 +6,10 @@ export default {
         newSession: {},
         currentSession: {},
         currentParticipant: {},
+        sessionParticipants: [],
 
-        stopFollowSession: null
+        stopFollowSession: null,
+        stopFollowParticipants: null
     },
     mutations: {
         SET_QUIZ_LIST(state, quizList) {
@@ -24,18 +26,56 @@ export default {
         },
         SET_CURRENT_PARTICIPANT(state, currentParticipant) {
             state.currentParticipant = currentParticipant
+        }
+        , SET_SESSION_PARTICIPANTS(state, sessionParticipants) {
+            state.sessionParticipants = sessionParticipants
+        },
+        UPDATE_ANSWERS(state, participant){
+            let fi = state.sessionParticipants.findIndex(p => p.id == participant.id)
+            if(state.sessionParticipants[fi]){
+                state.sessionParticipants[fi].answers = participant.answers
+            }
         },
         SET_EXIT_FOR_SESSION(state, exit) {
             state.stopFollowSession = exit
         },
+        SET_EXIT_FOR_PARTICIPANTS(state, exit) {
+            state.stopFollowParticipants = exit
+        },
         EXIT_CURRENT_SESSION(state) {
             if (state.stopFollowSession)
                 state.stopFollowSession()
+        },
+        EXIT_PARTICIPANTS_FOLLOWING(state) {
+            if (state.stopFollowParticipants)
+                state.stopFollowParticipants()
         }
     },
     actions: {
+        START_FOLLOW_PARTICIPANTS({ commit }, { quizId, sessionId}) {
+            let stop = Vue.$db.collection(`quizzes/${quizId}/sessions/${sessionId}/participants`)
+                .onSnapshot(function (querySnapshot) {
+                    var ps = [];
+                    querySnapshot.forEach(function (doc) {
+                        console.log('START_FOLLOW_PARTICIPANTS', doc.data())
+                        ps.push({
+                            id: doc.id,
+                            ...doc.data()
+                        });
+                        // Vue.$db.doc(`quizzes/${quizId}/sessions/${sessionId}/participants/${doc.id}`)
+                        // .onSnapshot(function (doc) {
+                        //     commit('UPDATE_ANSWERS', {id: doc.id, ...doc.data()})
+                        // });
+                        commit('SET_SESSION_PARTICIPANTS', ps)
+                    });
+                });
+                commit('SET_EXIT_FOR_PARTICIPANTS', stop)
+        },
+        SAVE_RESULT(ctx, { quizId, sessionId, participantId, answers }) {
+            Vue.$db.doc(`quizzes/${quizId}/sessions/${sessionId}/participants/${participantId}`)
+                .update({ 'answers': answers })
+        },
         START_FOLLOW_SESSION({ commit }, { quizId, sessionId }) {
-            console.log('hello')
             let stop = Vue.$db.doc(`quizzes/${quizId}/sessions/${sessionId}`)
                 .onSnapshot(function (doc) {
                     console.log("Current CHANGES IN session: ", doc.data());
@@ -50,14 +90,18 @@ export default {
                 return
             }
 
-            Vue.$db.collection(`quizzes/${quizId}/sessions/${sessionId}/participants`).add({
+            let ref  = Vue.$db.collection(`quizzes/${quizId}/sessions/${sessionId}/participants`).doc()
+            console.log(ref.id)
+
+            ref.set({
                 name: participant.name
-            })
-                .then(function (participantRef) {
-                    console.log("Participant written with ID: ", participantRef.id);
+            }, {merge: true})
+                .then(function () {
+                    console.log("Participant written with ID: ", ref.id)
                     let p = {
-                        id: participantRef.id,
-                        name: participant.name
+                        id: ref.id,
+                        name: participant.name,
+                        answers: []
                     }
                     commit('SET_CURRENT_PARTICIPANT', p)
                 })
@@ -225,6 +269,8 @@ export default {
         CURRENT_QUIZ: (state) => state.currentQuiz,
         NEW_SESSION: (state) => state.newSession,
         CURRENT_SESSION: (state) => state.currentSession,
-        CURRENT_PARTICIPANT: (state) => state.currentParticipant
+        CURRENT_PARTICIPANT: (state) => state.currentParticipant,
+
+        SESSION_PARTICIPANTS: (state) => state.sessionParticipants
     },
 }

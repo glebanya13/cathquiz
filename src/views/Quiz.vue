@@ -20,13 +20,12 @@
         :to="sessionParticipantUrl"
         tag="span"
         style="cursor: pointer"
-        
       >
         для Участника {{ sessionParticipantUrl }}
       </router-link>
       <br />
       <br>
-      <router-link :to="sessionModeratorUrl"  tag="span" style="cursor: pointer">
+      <router-link :to="sessionModeratorUrl"  tag="span" style="cursor: pointer" >
         Для модератора {{ sessionModeratorUrl }}
       </router-link>
     </v-card-text>
