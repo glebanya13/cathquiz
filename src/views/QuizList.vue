@@ -42,9 +42,8 @@
                 v-model="currentQuiz.questionTime"
                 label="Время на вопрос"
               ></v-text-field>
-              <v-btn color="#8A2BE2" dark @click="step = 2"> Continue </v-btn>
 
-              <v-btn text @click="step = 2"> Cancel </v-btn>
+              <v-btn color="#8A2BE2" dark @click="step = 2">Continue</v-btn>
             </v-stepper-content>
 
             <v-stepper-content step="2">
@@ -54,7 +53,8 @@
               </h2>
 
               <br />
-              <div v-for="question in questions" :key="question">
+              <div v-for="(question, index) in questions" :key="index">
+                <h2>{{ question.answers }}</h2>
                 <v-row>
                   <v-col cols="12" sm="6">
                     <v-text-field
@@ -68,7 +68,7 @@
                     <v-icon @click="addAnswers(question)">add</v-icon>
                   </v-col>
 
-                  <div v-for="answer in answers" :key="answer">
+                  <div v-for="(answer, index) in answers" :key="index">
                     <v-card
                       class="ml-2"
                       v-if="answer.questionId == question.qid"
@@ -79,23 +79,25 @@
                           v-model="answer.text"
                           >{{ answer.text }}</v-text-field
                         >
-                        <v-text-field
+
+                        <v-select
                           placeholder="Correct"
                           v-model="answer.correct"
-                          >answer.correct</v-text-field
+                          :items="correct"
                         >
-                        <v-icon @click="deleteAnswer(answer)">delete</v-icon>
+                        </v-select>
+                        <v-icon @click="deleteAnswer(index)">delete</v-icon>
                       </v-card-text>
                     </v-card>
                   </div>
                 </v-row>
 
-                <v-icon @click="deleteQuestion(question)">delete</v-icon>
+                <v-icon @click="deleteQuestion(question, index)">delete</v-icon>
               </div>
 
               <v-btn color="#8A2BE2" dark @click="addQuiz()"> Continue </v-btn>
 
-              <v-btn text> Cancel </v-btn>
+              <v-btn text @click="step = 1"> Cancel </v-btn>
             </v-stepper-content>
 
             <v-stepper-content step="3">
@@ -127,6 +129,7 @@ export default {
       currentQuiz: {},
       questions: [],
       answers: [],
+      correct: [true, false],
     };
   },
   computed: {
@@ -135,7 +138,7 @@ export default {
   methods: {
     ...mapActions(["LOAD_QUIZZES", "ADD_QUIZ", "ADD_QUESTIONS"]),
     addOrUpdate(item) {
-      console.log(item.quantity);
+      console.log(item);
       this.currentQuiz = item ? item : {};
       this.editMode = true;
     },
@@ -148,18 +151,16 @@ export default {
       });
       this.step = 2;
     },
-    deleteQuestion(question) {
-      this.deleteAnswer(question)
-      
-      this.questions.splice(this.questions.indexOf(question), 1);
+    deleteQuestion(question, index) {
+      this.deleteAnswer(question, index);
+      this.questions.splice(index, 1);
     },
     deleteAnswer(parametr) {
-      console.log(parametr)
-      if(parametr.qid){
+      if (parametr.qid) {
         let a = this.answers.filter((a) => a.questionId == parametr.qid);
         this.answers.splice(this.answers.indexOf(a), a.length);
-      }else{
-      this.answers.splice(this.answers.indexOf(parametr), 1);
+      } else {
+        this.answers.splice(parametr, 1);
       }
     },
     addQuestions() {

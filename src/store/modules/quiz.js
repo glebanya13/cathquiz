@@ -215,7 +215,6 @@ export default {
                     question.id = docQuestion.id
                     quiz.questions.push(question)
                 });
-
                 quizList.push(quiz)
             });
             commit('SET_QUIZ_LIST', quizList)
