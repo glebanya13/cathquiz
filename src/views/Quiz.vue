@@ -2,13 +2,13 @@
   <v-card>
     <v-card-title> Quiz: {{ CURRENT_QUIZ.title }} </v-card-title>
     <v-card-text>
-      Sessions
+      Sessions:
       <v-list>
         <v-list-item
           v-for="item in CURRENT_QUIZ.sessions"
           :key="item.id + item.name"
         >
-          {{ item.name }} <v-btn @click="select(item)">Select</v-btn>
+          {{ item.name }} <v-btn @click="select(item)" small class="ml-2">Select</v-btn>
         </v-list-item>
       </v-list>
       <br />
@@ -21,16 +21,18 @@
         tag="span"
         style="cursor: pointer"
       >
-        для Участника {{ sessionParticipantUrl }}
+      Для участника: {{ sessionParticipantUrl }}
       </router-link>
+      <a @click="copyLinkForParticipant()">Copy</a>
       <br />
       <br>
       <router-link :to="sessionModeratorUrl"  tag="span" style="cursor: pointer" >
-        Для модератора {{ sessionModeratorUrl }}
+        Для модератора: {{ sessionModeratorUrl }}
       </router-link>
     </v-card-text>
     <v-card-actions>
-      <v-btn @click="generate()">Generate Session</v-btn>
+      <v-spacer></v-spacer>
+      <v-btn @click="generate()" color="#8A2BE2" dark>Generate Session</v-btn>
     </v-card-actions>
   </v-card>
 </template>
@@ -68,6 +70,9 @@ export default {
         sessionName: this.newSessionName,
       });
     },
+    copyLinkForParticipant(){
+      this.$copyText(`localhost:8080/quiz/${this.sessionParticipantUrl}`) // место url наше название сайта
+    }
   },
   created() {
     this.GET_QUIZ({ id: this.$route.params.id, withSessions: true });

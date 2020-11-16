@@ -30,9 +30,9 @@ export default {
         , SET_SESSION_PARTICIPANTS(state, sessionParticipants) {
             state.sessionParticipants = sessionParticipants
         },
-        UPDATE_ANSWERS(state, participant){
+        UPDATE_ANSWERS(state, participant) {
             let fi = state.sessionParticipants.findIndex(p => p.id == participant.id)
-            if(state.sessionParticipants[fi]){
+            if (state.sessionParticipants[fi]) {
                 state.sessionParticipants[fi].answers = participant.answers
             }
         },
@@ -52,7 +52,7 @@ export default {
         }
     },
     actions: {
-        START_FOLLOW_PARTICIPANTS({ commit }, { quizId, sessionId}) {
+        START_FOLLOW_PARTICIPANTS({ commit }, { quizId, sessionId }) {
             let stop = Vue.$db.collection(`quizzes/${quizId}/sessions/${sessionId}/participants`)
                 .onSnapshot(function (querySnapshot) {
                     var ps = [];
@@ -62,6 +62,7 @@ export default {
                             id: doc.id,
                             ...doc.data()
                         });
+                        console.log(doc.data())
                         // Vue.$db.doc(`quizzes/${quizId}/sessions/${sessionId}/participants/${doc.id}`)
                         // .onSnapshot(function (doc) {
                         //     commit('UPDATE_ANSWERS', {id: doc.id, ...doc.data()})
@@ -69,7 +70,7 @@ export default {
                         commit('SET_SESSION_PARTICIPANTS', ps)
                     });
                 });
-                commit('SET_EXIT_FOR_PARTICIPANTS', stop)
+            commit('SET_EXIT_FOR_PARTICIPANTS', stop)
         },
         SAVE_RESULT(ctx, { quizId, sessionId, participantId, answers }) {
             Vue.$db.doc(`quizzes/${quizId}/sessions/${sessionId}/participants/${participantId}`)
@@ -84,18 +85,32 @@ export default {
                 });
             commit('SET_EXIT_FOR_SESSION', stop)
         },
-        ADD_PARTICIPANT({ commit }, { quizId, sessionId, participant }) {
+        ADD_PARTICIPANT({ commit, getters }, { quizId, sessionId, participant, phone }) {
             if (!quizId || !sessionId) {
                 console.log('ADD_PARTICIPANT id:', quizId)
                 return
             }
 
-            let ref  = Vue.$db.collection(`quizzes/${quizId}/sessions/${sessionId}/participants`).doc()
+            let ref = Vue.$db.collection(`quizzes/${quizId}/sessions/${sessionId}/participants`).doc(getters.userId);
+            let userDataRef = Vue.$db.collection('userData').doc(getters.userId);
+
+            userDataRef.set({
+                birthday: participant.birthday,
+                clas: participant.clas,
+                name: participant.name,
+                surname: participant.surname,
+                parish: participant.parish,
+                phone: phone,
+                userId: getters.userId,
+            }, { merge: true })
+
             console.log(ref.id)
 
             ref.set({
-                name: participant.name
-            }, {merge: true})
+                name: participant.name,
+                surname: participant.surname
+            }, { merge: true })
+
                 .then(function () {
                     console.log("Participant written with ID: ", ref.id)
                     let p = {
@@ -228,7 +243,6 @@ export default {
 
                     let questions = quiz.questions
                     questions.forEach((q) => {
-                        console.log(q)
                         qref.add({
                             question: q.question,
                             type: q.type,

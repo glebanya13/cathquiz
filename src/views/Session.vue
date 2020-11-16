@@ -17,9 +17,13 @@
           </v-card-subtitle>
           <v-card-text>
             <v-list>
-              <v-list-item v-for="p in SESSION_PARTICIPANTS" :key="p.name">
-                {{ p.name }} ответил {{ p.answers ? p.answers.length : 0 }} вопросов. Из них
-                {{ p.answers ? p.answers.filter(a => a.correct).length : 0 }} правильно
+              <v-list-item v-for="p in SESSION_PARTICIPANTS" :key="p.id">
+                {{ p.name }} {{ p.surname }} ответил
+                {{ p.answers ? p.answers.length : 0 }} вопросов. Из них
+                {{
+                  p.answers ? p.answers.filter((a) => a.correct).length : 0
+                }}
+                правильно
               </v-list-item>
             </v-list>
           </v-card-text>
@@ -42,15 +46,17 @@ export default {
     ...mapGetters(["CURRENT_QUIZ", "CURRENT_SESSION", "SESSION_PARTICIPANTS"]),
     participants() {
       let ps = this.SESSION_PARTICIPANTS || [];
-      return ps.length == 0 ? [] : ps.sort(
-        (a, b) =>
-          a.answers.filter((an) => an.correct).length >
-          b.answers.filter((ba) => ba.correct).length
-      );
+      return ps.length == 0
+        ? []
+        : ps.sort(
+            (a, b) =>
+              a.answers.filter((an) => an.correct).length >
+              b.answers.filter((ba) => ba.correct).length
+          );
     },
   },
   methods: {
-    ...mapMutations(['EXIT_PARTICIPANTS_FOLLOWING']),
+    ...mapMutations(["EXIT_PARTICIPANTS_FOLLOWING"]),
     ...mapActions([
       "GET_QUIZ",
       "GET_SESSION",
@@ -73,7 +79,7 @@ export default {
         quizId: this.$route.params.quizId,
         sessionId: this.$route.params.sessionId,
       });
-      this.EXIT_PARTICIPANTS_FOLLOWING()
+      this.EXIT_PARTICIPANTS_FOLLOWING();
     },
   },
   created() {

@@ -7,7 +7,9 @@ import firebaseConfig from './config/firebase';
 import firebase from 'firebase';
 import VuetifyConfirm from 'vuetify-confirm'
 import vueAwesomeCountdown from 'vue-awesome-countdown'
+import VueClipboard from 'vue-clipboard2'
 
+Vue.use(VueClipboard)
 Vue.use(vueAwesomeCountdown, 'vac')
 
 const moment = require('moment')

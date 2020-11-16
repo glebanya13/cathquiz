@@ -54,7 +54,6 @@
 
               <br />
               <div v-for="(question, index) in questions" :key="index">
-                <h2>{{ question.answers }}</h2>
                 <v-row>
                   <v-col cols="12" sm="6">
                     <v-text-field
