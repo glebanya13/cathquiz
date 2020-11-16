@@ -95,20 +95,24 @@ export default {
             let userDataRef = Vue.$db.collection('userData').doc(getters.userId);
 
             userDataRef.set({
-                birthday: participant.birthday,
-                clas: participant.clas,
-                name: participant.name,
-                surname: participant.surname,
-                parish: participant.parish,
-                phone: phone,
+                birthday: participant.birthday || '',
+                clas: participant.clas || '',
+                name: participant.name || '',
+                surname: participant.surname || '',
+                parish: participant.parish || '',
+                phone: phone || '',
                 userId: getters.userId,
             }, { merge: true })
 
             console.log(ref.id)
 
             ref.set({
-                name: participant.name,
-                surname: participant.surname
+                birthday: participant.birthday || '',
+                clas: participant.clas || '',
+                name: participant.name || '',
+                surname: participant.surname || '',
+                parish: participant.parish || '',
+                phone: phone || '',
             }, { merge: true })
 
                 .then(function () {
@@ -116,6 +120,11 @@ export default {
                     let p = {
                         id: ref.id,
                         name: participant.name,
+                        surname: participant.surname,
+                        birthday: participant.birthday,
+                        clas: participant.clas,
+                        parish: participant.parish,
+                        phone: phone,
                         answers: []
                     }
                     commit('SET_CURRENT_PARTICIPANT', p)
@@ -125,31 +134,20 @@ export default {
                     throw e;
                 });
         },
-        START_QUIZ({ commit, getters }, { quizId, sessionId }) {
+        CHANGE_QUIZ_STATE({ commit, getters }, { quizId, sessionId, state }) {
             if (!quizId || !sessionId) {
-                console.log('START_QUIZ id:', quizId)
+                console.log('CHANGE_QUIZ_STATE id:', quizId)
                 return
             }
 
             let ref = Vue.$db.doc(`quizzes/${quizId}/sessions/${sessionId}`)
-            ref.update({ 'alive': true })
+            ref.update({ 'state': state })
 
             let item = { ...getters.CURRENT_SESSION }
-            item.alive = true
+            item.state = state
             commit('SET_CURRENT_SESSION', item)
         },
-        STOP_QUIZ({ commit, getters }, { quizId, sessionId }) {
-            if (!quizId || !sessionId) {
-                console.log('STOP_QUIZ id:', quizId)
-                return
-            }
-            let ref = Vue.$db.doc(`quizzes/${quizId}/sessions/${sessionId}`)
-            ref.update({ alive: false })
-            let item = { ...getters.CURRENT_SESSION }
-            item.alive = false
-            commit('SET_CURRENT_SESSION', item)
-        },
-        async GET_SESSION({ commit }, { quizId, sessionId, withParticipants }) {
+        async GET_SESSION({ commit }, { quizId, sessionId, withParticipants, currentParticipantId }) {
             if (!quizId || !sessionId) {
                 console.log('GET_SESSION id:', quizId)
                 return
@@ -169,6 +167,12 @@ export default {
                     p.id = docP.id
                     session.participants.push(p)
                 });
+                if(currentParticipantId){
+                    let p = session.participants.find(pt => pt.id == currentParticipantId)
+                    if(p){
+                        commit('SET_CURRENT_PARTICIPANT', p)
+                    }
+                }
             }
             commit('SET_CURRENT_SESSION', session)
         },

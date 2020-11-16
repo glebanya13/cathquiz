@@ -1,8 +1,8 @@
 <template>
   <v-card>
-    <v-card-title> Quiz: {{ CURRENT_QUIZ.title }} </v-card-title>
+    <v-card-title> Конкурс: {{ CURRENT_QUIZ.title }} </v-card-title>
     <v-card-text>
-      Sessions:
+      Сессия:
       <v-list>
         <v-list-item
           v-for="item in CURRENT_QUIZ.sessions"

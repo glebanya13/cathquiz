@@ -8,9 +8,11 @@ import firebase from 'firebase';
 import VuetifyConfirm from 'vuetify-confirm'
 import vueAwesomeCountdown from 'vue-awesome-countdown'
 import VueClipboard from 'vue-clipboard2'
+import VueLocalStorage from 'vue-localstorage'
 
 Vue.use(VueClipboard)
 Vue.use(vueAwesomeCountdown, 'vac')
+Vue.use(VueLocalStorage)
 
 const moment = require('moment')
 require('moment/locale/ru')

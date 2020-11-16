@@ -7,11 +7,13 @@
         </v-flex>
         <v-flex v-if="isUserAuthenticated">
           <v-toolbar color="#8A2BE2" dark flat>
-            <v-toolbar-title v-if="initialState"
+            <v-toolbar-title v-if="playState == 'initial'"
               >Введите данные</v-toolbar-title
             >
             <v-toolbar-title v-else>Погнали!</v-toolbar-title>
-            <v-toolbar-title v-if="finishState">Конец</v-toolbar-title>
+            <v-toolbar-title v-if="playState == 'finished'"
+              >Конец</v-toolbar-title
+            >
           </v-toolbar>
           <v-card
             ><v-card-title>
@@ -22,7 +24,7 @@
             </v-card-subtitle>
             <v-card-text>
               <v-container>
-                <v-row v-if="initialState">
+                <v-row v-if="playState == 'initial'">
                   <v-col>
                     <v-text-field
                       v-model="currentUser.name"
@@ -53,7 +55,7 @@
                     ></v-overflow-btn>
                   </v-col>
                 </v-row>
-                <v-row v-if="waitingState">
+                <v-row v-if="playState == 'waiting'">
                   <v-col>
                     <p>Тест скоро начнется</p>
                     <br />
@@ -64,30 +66,34 @@
                       @finish="ready()"
                     >
                       <template v-slot:process="live">
-                        <span headline>{{
-                          `До начала осталось: ${live.timeObj.ceil.s} секунд`
-                        }}</span>
+                        <h4>
+                          {{
+                            `До начала осталось: ${live.timeObj.ceil.s} секунд`
+                          }}
+                        </h4>
                       </template>
                       <template v-slot:finish>
-                        <span headline>Когда будешь готов, жми начать!</span>
+                        <h4>Когда будешь готов, жми начать!</h4>
                       </template>
                     </countdown>
                     <br />
                   </v-col>
                 </v-row>
-                <v-row v-if="startedState">
+                <v-row v-if="playState == 'started'">
                   <v-col>
                     <v-row>
                       <v-col>
                         <countdown
                           ref="qCountdown"
-                          :left-time="questionTime"
+                          :left-time="questionTime || 30000"
                           @finish="nextQuestion()"
                         >
                           <template v-slot:process="anyYouWantedScopName">
-                            <span headline>{{
-                              `Время на ответ: ${anyYouWantedScopName.timeObj.ceil.s} секунд`
-                            }}</span>
+                            <h4>
+                              {{
+                                `Время на ответ: ${anyYouWantedScopName.timeObj.ceil.s} секунд`
+                              }}
+                            </h4>
                           </template>
                         </countdown>
                       </v-col>
@@ -134,7 +140,7 @@
                     </v-card>
                   </v-col>
                 </v-row>
-                <v-row v-if="finishState">
+                <v-row v-if="playState == 'finished'">
                   <v-col>
                     <p>Результат {{ result }} из {{ questions.length }}</p>
                   </v-col>
@@ -143,11 +149,15 @@
             </v-card-text>
             <v-card-actions>
               <v-spacer></v-spacer>
-              <v-btn v-if="readyState" @click="startQuiz()" color="#8A2BE2" dark
+              <v-btn
+                v-if="playState == 'ready'"
+                @click="startQuiz()"
+                color="#8A2BE2"
+                dark
                 >Начать</v-btn
               >
               <v-btn
-                v-if="initialState"
+                v-if="playState == 'initial'"
                 @click="register()"
                 color="#8A2BE2"
                 dark
@@ -166,6 +176,7 @@ import { mapGetters, mapActions, mapMutations } from "vuex";
 import Auth from "../components/Auth.vue";
 import firebase from "firebase";
 //import moment from "moment";
+import Vue from "vue";
 
 export default {
   data() {
@@ -189,11 +200,7 @@ export default {
         "Школу закончил",
       ],
       parishes: ["Святой Троицы, г. Глубокое"],
-      waitingState: false,
-      readyState: false,
-      startedState: false,
-      initialState: true,
-      finishState: false,
+      playState: "initial",
 
       currentQuestion: {},
       currentQuestionIndex: 0,
@@ -201,18 +208,19 @@ export default {
       answers: [],
       selectedAnswerIndex: null,
       questionTime: 30000,
+      participantId: null,
     };
   },
   computed: {
     ...mapGetters(["CURRENT_QUIZ", "CURRENT_SESSION", "CURRENT_PARTICIPANT"]),
     lastQuestion() {
-      return this.currentQuestionIndex + 1 == this.questions.length;
+      return this.currentQuestionIndex + 1 >= this.questions.length;
     },
     result() {
       return this.answers ? this.answers.filter((a) => a.correct).length : 0;
     },
     progress() {
-      return this.currentQuestionIndex == 0
+      return this.currentQuestionIndex == 0 || this.questions.length == 0
         ? 0
         : (this.currentQuestionIndex * 100) / this.questions.length;
     },
@@ -226,10 +234,20 @@ export default {
   },
   watch: {
     CURRENT_SESSION(val) {
-      if (this.waitingState && val) {
-        console.log("it works");
-        if (val.alive)
-          this.$refs.playCountdown.startCountdown({ restart: true });
+      if (val) {
+        if (val.state == "alive") {
+          if (this.playState == "waiting") {
+            this.$refs.playCountdown.startCountdown({ restart: true });
+          }
+        }
+        if (val.state == "registration" && (this.playState == 'finished' || this.playState == 'started')) {
+          this.playState = 'initial'
+          this.clean()
+          // something
+        }
+        if (val.state == "completed") {
+          this.finishQuiz();
+        }
       }
     },
   },
@@ -242,13 +260,8 @@ export default {
       "START_FOLLOW_SESSION",
       "SAVE_RESULT",
     ]),
-    provevrka() {
-      let a = this.CURRENT_QUIZ.questionTime * 1000;
-      console.log(a);
-    },
     register() {
-      this.waitingState = true;
-      this.initialState = false;
+      this.playState = "waiting";
       this.ADD_PARTICIPANT({
         quizId: this.$route.params.quizId,
         sessionId: this.$route.params.sessionId,
@@ -259,39 +272,41 @@ export default {
         quizId: this.$route.params.quizId,
         sessionId: this.$route.params.sessionId,
       });
+      this.saveLocal();
     },
     ready() {
-      this.readyState = true;
+      this.playState = "ready";
       this.questions = this.CURRENT_QUIZ
         ? [...this.CURRENT_QUIZ.questions]
         : [];
       this.currentQuestion = this.questions[0];
       this.currentQuestionIndex = 0;
+      this.saveLocal();
     },
     startQuiz() {
-      this.startedState = true;
-      this.readyState = false;
-      this.waitingState = false;
-      this.initialState = false;
+      this.playState = "started";
+      this.saveLocal();
     },
     nextQuestion() {
       if (this.lastQuestion) {
         this.finishQuiz();
+        this.saveLocal();
         return;
       }
       this.saveCurrentResult();
       this.resetTimer();
       this.currentQuestionIndex++;
       this.currentQuestion = this.questions[this.currentQuestionIndex];
+      this.saveLocal();
     },
     finishQuiz() {
       this.saveCurrentResult();
-      this.finishState = true;
-      this.startedState = false;
+      this.playState = "finished";
       this.EXIT_CURRENT_SESSION();
+      this.saveLocal();
     },
     resetTimer() {
-      this.questionTime = this.CURRENT_QUIZ.questionTime * 1000;
+      this.questionTime = (this.CURRENT_QUIZ.questionTime || 30) * 1000;
       this.$refs.qCountdown.startCountdown({ restart: true });
     },
     saveCurrentResult() {
@@ -311,18 +326,53 @@ export default {
           participantId: this.CURRENT_PARTICIPANT.id,
           answers: this.answers,
         });
+        this.saveLocal();
       }
+    },
+    clean(){
+      this.answers = []
+      this.currentQuestionIndex = null
+      this.saveLocal()
+      //clean state
+    },
+    saveLocal() {
+      Vue.localStorage.set("currentQuestionIndex", this.currentQuestionIndex);
+      Vue.localStorage.set("selectedAnswerIndex", this.selectedAnswerIndex);
+      Vue.localStorage.set("participantId", this.CURRENT_PARTICIPANT.id);
+      Vue.localStorage.set("answers", JSON.stringify(this.answers));
+      Vue.localStorage.set("questions", JSON.stringify(this.questions));
+      Vue.localStorage.set("playState", this.playState);
+      Vue.localStorage.set("questionTime", this.questionTime);
+    },
+    loadLocal() {
+      this.currentQuestionIndex =
+        Vue.localStorage.get("currentQuestionIndex") || null;
+      this.selectedAnswerIndex =
+        Vue.localStorage.get("selectedAnswerIndex") || null;
+      this.participantId = Vue.localStorage.get("participantId");
+      this.answers = JSON.parse(Vue.localStorage.get("answers")) || [];
+      this.playState = Vue.localStorage.get("playState") || "initial";
+      this.questionTime = parseInt(Vue.localStorage.get("questionTime")) || 30;
+      this.questions = JSON.parse(Vue.localStorage.get("questions")) || [];
+      this.currentQuestion =
+        this.currentQuestionIndex &&
+        this.questions &&
+        this.questions.length > this.currentQuestionIndex
+          ? this.questions[this.currentQuestionIndex]
+          : {};
     },
   },
   components: {
     Auth,
   },
   created() {
+    this.loadLocal();
     this.GET_QUIZ({ id: this.$route.params.quizId, withQuestions: true });
     this.GET_SESSION({
       quizId: this.$route.params.quizId,
       sessionId: this.$route.params.sessionId,
       withParticipants: true,
+      currentParticipantId: this.participantId,
     });
   },
 };
