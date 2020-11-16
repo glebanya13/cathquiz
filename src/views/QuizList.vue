@@ -20,12 +20,6 @@
             <v-stepper-step :complete="step > 2" step="2" color="#8A2BE2">
               Вопросы
             </v-stepper-step>
-
-            <v-divider></v-divider>
-
-            <v-stepper-step step="3" color="#8A2BE2">
-              Проверить
-            </v-stepper-step>
           </v-stepper-header>
 
           <v-stepper-items>
@@ -35,15 +29,11 @@
                 label="Название"
               ></v-text-field>
               <v-text-field
-                v-model="currentQuiz.time"
-                label="Время прохождения"
-              ></v-text-field>
-              <v-text-field
                 v-model="currentQuiz.questionTime"
                 label="Время на вопрос"
               ></v-text-field>
 
-              <v-btn color="#8A2BE2" dark @click="step = 2">Continue</v-btn>
+              <v-btn color="#8A2BE2" dark @click="step = 2">Продолжить</v-btn>
             </v-stepper-content>
 
             <v-stepper-content step="2">
@@ -94,21 +84,11 @@
                 <v-icon @click="deleteQuestion(question, index)">delete</v-icon>
               </div>
 
-              <v-btn color="#8A2BE2" dark @click="addQuiz()"> Continue </v-btn>
+              <v-btn color="#8A2BE2" dark @click="addQuiz()">
+                Продолжить
+              </v-btn>
 
-              <v-btn text @click="step = 1"> Cancel </v-btn>
-            </v-stepper-content>
-
-            <v-stepper-content step="3">
-              <v-card
-                class="mb-12"
-                color="grey lighten-1"
-                height="200px"
-              ></v-card>
-
-              <v-btn color="#8A2BE2" dark @click="step = 1"> Continue </v-btn>
-
-              <v-btn text> Cancel </v-btn>
+              <v-btn text @click="step = 1"> Отмена </v-btn>
             </v-stepper-content>
           </v-stepper-items>
         </v-stepper>
@@ -137,18 +117,17 @@ export default {
   methods: {
     ...mapActions(["LOAD_QUIZZES", "ADD_QUIZ", "ADD_QUESTIONS"]),
     addOrUpdate(item) {
-      console.log(item);
       this.currentQuiz = item ? item : {};
       this.editMode = true;
     },
     addQuiz() {
       this.ADD_QUIZ({
+        id: this.currentQuiz.id,
         title: this.currentQuiz.title,
-        time: this.currentQuiz.time,
         questionTime: this.currentQuiz.questionTime,
         questions: this.questions,
       });
-      this.step = 2;
+      this.$router.push("/admin");
     },
     deleteQuestion(question, index) {
       this.deleteAnswer(question, index);

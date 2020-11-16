@@ -8,7 +8,7 @@
             {{ CURRENT_SESSION.name }}
           </v-card-title>
           <v-card-subtitle>
-            Participants Count:
+            Участников ответило:
             {{
               CURRENT_SESSION.participants
                 ? CURRENT_SESSION.participants.length
@@ -16,16 +16,100 @@
             }}
           </v-card-subtitle>
           <v-card-text>
-            <v-list>
-              <v-list-item v-for="p in SESSION_PARTICIPANTS" :key="p.id">
-                {{ p.name }} {{ p.surname }} ответил
-                {{ p.answers ? p.answers.length : 0 }} вопросов. Из них
-                {{
-                  p.answers ? p.answers.filter((a) => a.correct).length : 0
-                }}
-                правильно
-              </v-list-item>
-            </v-list>
+            <v-simple-table>
+              <template v-slot:default>
+                <thead>
+                  <tr>
+                    <th class="text-left">Имя</th>
+                    <th class="text-left">Ответы</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="p in SESSION_PARTICIPANTS" :key="p.id">
+                    <td>{{ p.name }} {{ p.surname }}</td>
+                    <td>
+                      {{
+                        p.answers
+                          ? p.answers.filter((a) => a.correct).length
+                          : 0
+                      }}
+                      из {{ p.answers ? p.answers.length : 0 }}
+                      <v-icon @click.stop="show = !show"
+                        >mdi-chevron-down</v-icon
+                      >
+                      <ul class="black--text" v-if="show">
+                        <li
+                          v-for="questions in CURRENT_QUIZ.questions"
+                          :key="questions.id"
+                        >
+                          {{ questions.question }}
+                          <v-chip
+                            class="ma-2"
+                            color="green"
+                            text-color="white"
+                            v-if="
+                              p.answers
+                                .filter((f) => f.questionId == questions.id)
+                                .map((f) => f.correct) == 'true'
+                            "
+                            >{{
+                              p.answers
+                                .filter((f) => f.questionId == questions.id)
+                                .map((f) => f.answer)
+                                .toString()
+                            }}</v-chip
+                          >
+                          <v-chip
+                            class="ma-2"
+                            color="red"
+                            text-color="white"
+                            v-if="
+                              p.answers
+                                .filter((f) => f.questionId == questions.id)
+                                .map((f) => f.correct) == 'false'
+                            "
+                            >{{
+                              p.answers
+                                .filter((f) => f.questionId == questions.id)
+                                .map((f) => f.answer)
+                                .toString()
+                            }}</v-chip
+                          >
+                          <!-- <v-chip class="ma-2" color="green" text-color="white" v-if="p.answers
+                              .filter((f) => f.questionId == questions.id)
+                              .map((f) => f.correct) == 'true'">
+                          Правильно
+                          </v-chip>
+                          <v-chip class="ma-2" color="red" text-color="white" v-if="p.answers
+                              .filter((f) => f.questionId == questions.id)
+                              .map((f) => f.correct) == 'false'">
+                          Неправильно
+                          </v-chip> -->
+                          <v-chip
+                            class="ma-2"
+                            color="primary"
+                            text-color="white"
+                            v-if="
+                              p.answers
+                                .filter((f) => f.questionId == questions.id)
+                                .map((f) => f.correct) == 'false'
+                            "
+                          >
+                            Правильный:
+                            {{
+                              questions.answers
+                                .filter((a) => a.correct == true)
+                                .map((a) => a.text)
+                                .toString()
+                            }}
+                          </v-chip>
+                        </li>
+                      </ul>
+                    </td>
+                  </tr>
+                </tbody>
+              </template>
+            </v-simple-table>
           </v-card-text>
           <v-card-actions>
             <v-btn @click="start()" text>Start</v-btn>
@@ -40,7 +124,9 @@
 import { mapGetters, mapActions, mapMutations } from "vuex";
 export default {
   data() {
-    return {};
+    return {
+      show: true,
+    };
   },
   computed: {
     ...mapGetters(["CURRENT_QUIZ", "CURRENT_SESSION", "SESSION_PARTICIPANTS"]),

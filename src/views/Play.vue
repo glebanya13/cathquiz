@@ -10,8 +10,10 @@
             <v-toolbar-title v-if="initialState"
               >Введите данные</v-toolbar-title
             >
-            <v-toolbar-title v-else>Погнали!</v-toolbar-title>
-            <v-toolbar-title v-if="finishState">Конец</v-toolbar-title>
+            <v-toolbar-title v-if="finishState">Результаты</v-toolbar-title>
+            <v-toolbar-title v-if="!finishState && !initialState"
+              >Конкурс</v-toolbar-title
+            >
           </v-toolbar>
           <v-card
             ><v-card-title>
@@ -116,6 +118,7 @@
                         </v-radio-group>
                       </v-card-text>
                       <v-card-actions text>
+                        <v-spacer></v-spacer>
                         <v-btn
                           v-if="!lastQuestion"
                           @click="nextQuestion()"
@@ -136,7 +139,115 @@
                 </v-row>
                 <v-row v-if="finishState">
                   <v-col>
-                    <p>Результат {{ result }} из {{ questions.length }}</p>
+                    <v-simple-table>
+                      <template v-slot:default>
+                        <thead>
+                          <tr>
+                            <th class="text-left">Имя</th>
+                            <th class="text-left">Ответы</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr v-for="p in CURRENT_PARTICIPANT" :key="p.id">
+                            <td>{{ p.name }} {{ p.surname }}</td>
+                            <td>
+                              {{
+                                p.answers
+                                  ? p.answers.filter((a) => a.correct).length
+                                  : 0
+                              }}
+                              из {{ p.answers ? p.answers.length : 0 }}
+                              <v-icon @click.stop="show = !show"
+                                >mdi-chevron-down</v-icon
+                              >
+                              <ul class="black--text" v-if="show">
+                                <li
+                                  v-for="questions in CURRENT_QUIZ.questions"
+                                  :key="questions.id"
+                                >
+                                  {{ questions.question }}
+                                  <v-chip
+                                    class="ma-2"
+                                    color="green"
+                                    text-color="white"
+                                    v-if="
+                                      p.answers
+                                        .filter(
+                                          (f) => f.questionId == questions.id
+                                        )
+                                        .map((f) => f.correct) == 'true'
+                                    "
+                                    >{{
+                                      p.answers
+                                        .filter(
+                                          (f) => f.questionId == questions.id
+                                        )
+                                        .map((f) => f.answer)
+                                        .toString()
+                                    }}</v-chip
+                                  >
+                                  <v-chip
+                                    class="ma-2"
+                                    color="red"
+                                    text-color="white"
+                                    v-if="
+                                      p.answers
+                                        .filter(
+                                          (f) => f.questionId == questions.id
+                                        )
+                                        .map((f) => f.correct) == 'false'
+                                    "
+                                    >{{
+                                      p.answers
+                                        .filter(
+                                          (f) => f.questionId == questions.id
+                                        )
+                                        .map((f) => f.answer)
+                                        .toString()
+                                    }}</v-chip
+                                  >
+                                  <v-chip
+                                    class="ma-2"
+                                    color="primary"
+                                    text-color="white"
+                                    v-if="
+                                      p.answers
+                                        .filter(
+                                          (f) => f.questionId == questions.id
+                                        )
+                                        .map((f) => f.correct) == 'false'
+                                    "
+                                  >
+                                    Правильный:
+                                    {{
+                                      questions.answers
+                                        .filter((a) => a.correct == true)
+                                        .map((a) => a.text)
+                                        .toString()
+                                    }}
+                                  </v-chip>
+                                </li>
+                              </ul>
+                            </td>
+                            <v-snackbar
+                              v-model="snackbar"
+                              bottom
+                              light
+                              color="green lighten-1"
+                            >
+                              <v-icon>check</v-icon> Результат:
+                              {{
+                                p.answers
+                                  ? p.answers.filter((a) => a.correct).length
+                                  : 0
+                              }}
+                              из {{ p.answers ? p.answers.length : 0 }}
+                            </v-snackbar>
+                          </tr>
+                        </tbody>
+                      </template>
+                    </v-simple-table>
+                    <!-- <p>Результат {{ result }} из {{ questions.length }}</p> -->
                   </v-col>
                 </v-row>
               </v-container>
@@ -173,6 +284,8 @@ export default {
       currentUser: {
         answers: [],
       },
+      show: false,
+      snackbar: false,
       classes: [
         "Школу не начинал",
         "Первый",
@@ -200,13 +313,21 @@ export default {
       questions: [],
       answers: [],
       selectedAnswerIndex: null,
-      questionTime: 30000,
     };
   },
   computed: {
-    ...mapGetters(["CURRENT_QUIZ", "CURRENT_SESSION", "CURRENT_PARTICIPANT"]),
+    ...mapGetters([
+      "CURRENT_QUIZ",
+      "CURRENT_SESSION",
+      "CURRENT_PARTICIPANT",
+      "SESSION_PARTICIPANTS",
+    ]),
     lastQuestion() {
       return this.currentQuestionIndex + 1 == this.questions.length;
+    },
+    questionTime() {
+      let a = this.CURRENT_QUIZ.questionTime * 1000;
+      return a;
     },
     result() {
       return this.answers ? this.answers.filter((a) => a.correct).length : 0;
@@ -240,12 +361,9 @@ export default {
       "GET_SESSION",
       "ADD_PARTICIPANT",
       "START_FOLLOW_SESSION",
+      "START_FOLLOW_PARTICIPANTS",
       "SAVE_RESULT",
     ]),
-    provevrka() {
-      let a = this.CURRENT_QUIZ.questionTime * 1000;
-      console.log(a);
-    },
     register() {
       this.waitingState = true;
       this.initialState = false;
@@ -289,9 +407,13 @@ export default {
       this.finishState = true;
       this.startedState = false;
       this.EXIT_CURRENT_SESSION();
+      // this.START_FOLLOW_PARTICIPANTS({
+      //   quizId: this.$route.params.quizId,
+      //   sessionId: this.$route.params.sessionId,
+      // });
+      this.snackbar = true;
     },
     resetTimer() {
-      this.questionTime = this.CURRENT_QUIZ.questionTime * 1000;
       this.$refs.qCountdown.startCountdown({ restart: true });
     },
     saveCurrentResult() {

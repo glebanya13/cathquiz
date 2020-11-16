@@ -232,7 +232,6 @@ export default {
 
             ref.set({
                 title: quiz.title,
-                time: quiz.time,
                 questionTime: quiz.questionTime
             }, { merge: true })
 
