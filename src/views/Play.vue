@@ -10,8 +10,11 @@
             <v-toolbar-title v-if="playState == 'initial'"
               >Введите данные</v-toolbar-title
             >
-            <v-toolbar-title v-if="playState == 'finished'">Результаты</v-toolbar-title>
-            <v-toolbar-title v-if="playState !== 'finished' && playState !=='initial'"
+            <v-toolbar-title v-if="playState == 'finished'"
+              >Результаты</v-toolbar-title
+            >
+            <v-toolbar-title
+              v-if="playState !== 'finished' && playState !== 'initial'"
               >Конкурс</v-toolbar-title
             >
           </v-toolbar>
@@ -143,30 +146,9 @@
                 </v-row>
                 <v-row v-if="playState == 'finished'">
                   <v-col>
-                    <v-simple-table>
-                      <template v-slot:default>
-                        <thead>
-                          <tr>
-                            <th class="text-left">Имя</th>
-                            <th class="text-left">Ответы</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr v-for="p in CURRENT_PARTICIPANT" :key="p.id">
-                            <td>{{ p.name }} {{ p.surname }}</td>
-                            <td>
-                              {{
-                                p.answers
-                                  ? p.answers.filter((a) => a.correct).length
-                                  : 0
-                              }}
-                              из {{ p.answers ? p.answers.length : 0 }}
-                              <v-icon @click.stop="show = !show"
-                                >mdi-chevron-down</v-icon
-                              >
-                              <ul class="black--text" v-if="show">
+                              <ul v-if="showResults" class="black--text">
                                 <li
-                                  v-for="questions in CURRENT_QUIZ.questions"
+                                  v-for="questions in questions"
                                   :key="questions.id"
                                 >
                                   {{ questions.question }}
@@ -175,14 +157,14 @@
                                     color="green"
                                     text-color="white"
                                     v-if="
-                                      p.answers
+                                      answers
                                         .filter(
                                           (f) => f.questionId == questions.id
                                         )
                                         .map((f) => f.correct) == 'true'
                                     "
                                     >{{
-                                      p.answers
+                                      answers
                                         .filter(
                                           (f) => f.questionId == questions.id
                                         )
@@ -195,14 +177,14 @@
                                     color="red"
                                     text-color="white"
                                     v-if="
-                                      p.answers
+                                      answers
                                         .filter(
                                           (f) => f.questionId == questions.id
                                         )
                                         .map((f) => f.correct) == 'false'
                                     "
                                     >{{
-                                      p.answers
+                                      answers
                                         .filter(
                                           (f) => f.questionId == questions.id
                                         )
@@ -215,7 +197,7 @@
                                     color="primary"
                                     text-color="white"
                                     v-if="
-                                      p.answers
+                                      answers
                                         .filter(
                                           (f) => f.questionId == questions.id
                                         )
@@ -232,26 +214,22 @@
                                   </v-chip>
                                 </li>
                               </ul>
-                            </td>
-                            <v-snackbar
-                              v-model="snackbar"
+
+                              <br>
+
+                            <v-alert
                               bottom
                               light
                               color="green lighten-1"
                             >
                               <v-icon>check</v-icon> Результат:
                               {{
-                                p.answers
-                                  ? p.answers.filter((a) => a.correct).length
+                                answers
+                                  ? answers.filter((a) => a.correct).length
                                   : 0
                               }}
-                              из {{ p.answers ? p.answers.length : 0 }}
-                            </v-snackbar>
-                          </tr>
-                        </tbody>
-                      </template>
-                    </v-simple-table>
-                    <!-- <p>Результат {{ result }} из {{ questions.length }}</p> -->
+                              из {{ questions ? questions.length : 0 }}
+                            </v-alert>
                   </v-col>
                 </v-row>
               </v-container>
@@ -318,8 +296,8 @@ export default {
       questions: [],
       answers: [],
       selectedAnswerIndex: null,
-      questionTime: 30000,
       participantId: null,
+      showResults: false
     };
   },
   computed: {
@@ -331,10 +309,6 @@ export default {
     ]),
     lastQuestion() {
       return this.currentQuestionIndex + 1 >= this.questions.length;
-    },
-    questionTime() {
-      let a = this.CURRENT_QUIZ.questionTime * 1000;
-      return a;
     },
     result() {
       return this.answers ? this.answers.filter((a) => a.correct).length : 0;
@@ -360,13 +334,18 @@ export default {
             this.$refs.playCountdown.startCountdown({ restart: true });
           }
         }
-        if (val.state == "registration" && (this.playState == 'finished' || this.playState == 'started')) {
-          this.playState = 'initial'
-          this.clean()
+        if (
+          val.state == "registration" &&
+          (this.playState == "finished" || this.playState == "started")
+        ) {
+          this.playState = "initial";
+          this.clean();
           // something
         }
         if (val.state == "completed") {
           this.finishQuiz();
+          this.showResults = true
+          this.EXIT_CURRENT_SESSION();
         }
       }
     },
@@ -397,10 +376,14 @@ export default {
     },
     ready() {
       this.playState = "ready";
-      this.questions = this.CURRENT_QUIZ
+      this.questions = shuffle(this.CURRENT_QUIZ
         ? [...this.CURRENT_QUIZ.questions]
-        : [];
+        : []);
       this.currentQuestion = this.questions[0];
+      if(this.currentQuestion)
+      {
+        this.currentQuestion.answers = shuffle(this.currentQuestion.answers)
+      }
       this.currentQuestionIndex = 0;
       this.saveLocal();
     },
@@ -423,7 +406,6 @@ export default {
     finishQuiz() {
       this.saveCurrentResult();
       this.playState = "finished";
-      this.EXIT_CURRENT_SESSION();
       this.saveLocal();
     },
     resetTimer() {
@@ -451,10 +433,10 @@ export default {
         this.saveLocal();
       }
     },
-    clean(){
-      this.answers = []
-      this.currentQuestionIndex = null
-      this.saveLocal()
+    clean() {
+      this.answers = [];
+      this.currentQuestionIndex = null;
+      this.saveLocal();
       //clean state
     },
     saveLocal() {
@@ -482,6 +464,10 @@ export default {
         this.questions.length > this.currentQuestionIndex
           ? this.questions[this.currentQuestionIndex]
           : {};
+      if(this.currentQuestion)
+      {
+        this.currentQuestion.answers = shuffle(this.currentQuestion.answers)
+      }
     },
   },
   components: {
@@ -496,8 +482,34 @@ export default {
       withParticipants: true,
       currentParticipantId: this.participantId,
     });
+
+    this.questionTime = this.CURRENT_QUIZ
+      ? this.CURRENT_QUIZ.questionTime * 1000
+      : 30000;
   },
 };
+
+function shuffle(array) {
+  if(!array)
+  return []
+
+  var currentIndex = array.length, temporaryValue, randomIndex;
+
+  // While there remain elements to shuffle...
+  while (0 !== currentIndex) {
+
+    // Pick a remaining element...
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex -= 1;
+
+    // And swap it with the current element.
+    temporaryValue = array[currentIndex];
+    array[currentIndex] = array[randomIndex];
+    array[randomIndex] = temporaryValue;
+  }
+
+  return array;
+}
 </script>
 <style >
 .v-card__text,

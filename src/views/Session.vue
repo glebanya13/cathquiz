@@ -35,6 +35,19 @@
             {{ showResult(item) }} 
           </template>
     </v-data-table>
+          </v-card-text>
+          <v-card-actions>
+            <v-btn @click="startRegistration()" text>Начать регистрацию (заново) </v-btn>
+            <v-btn v-if="CURRENT_SESSION.state == 'registration'" @click="start()" text>Начать конкурс </v-btn>
+            <v-btn v-if="CURRENT_SESSION.state == 'alive'" @click="stop()" text>Закончить конкурс</v-btn>
+          </v-card-actions>
+        </v-card></v-col
+      >
+    </v-row>
+
+    <v-row>
+      <v-col>
+        
             <v-simple-table>
               <template v-slot:default>
                 <thead>
@@ -129,14 +142,7 @@
                 </tbody>
               </template>
             </v-simple-table>
-          </v-card-text>
-          <v-card-actions>
-            <v-btn @click="startRegistration()" text>Начать регистрацию (заново) </v-btn>
-            <v-btn v-if="CURRENT_SESSION.state == 'registration'" @click="start()" text>Начать конкурс </v-btn>
-            <v-btn v-if="CURRENT_SESSION.state == 'alive'" @click="stop()" text>Закончить конкурс</v-btn>
-          </v-card-actions>
-        </v-card></v-col
-      >
+      </v-col>
     </v-row>
   </v-container>
 </template>
@@ -222,6 +228,10 @@ export default {
       sessionId: this.$route.params.sessionId,
       withParticipants: true,
     });
+    this.START_FOLLOW_PARTICIPANTS({
+        quizId: this.$route.params.quizId,
+        sessionId: this.$route.params.sessionId,
+      });
   },
 };
 </script>
