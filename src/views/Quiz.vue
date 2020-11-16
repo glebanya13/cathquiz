@@ -8,7 +8,8 @@
           v-for="item in CURRENT_QUIZ.sessions"
           :key="item.id + item.name"
         >
-          {{ item.name }} <v-btn @click="select(item)" small class="ml-2">Select</v-btn>
+          {{ item.name }}
+          <v-btn @click="select(item)" small class="ml-2">Select</v-btn>
         </v-list-item>
       </v-list>
       <br />
@@ -21,14 +22,15 @@
         tag="span"
         style="cursor: pointer"
       >
-      Для участника: {{ sessionParticipantUrl }}
+        Для участника: {{ sessionParticipantUrl }}
       </router-link>
-      <a @click="copyLinkForParticipant()">Copy</a>
+      <a @click="copyLinkForParticipant()" v-if="sessionParticipantUrl">Copy</a>
       <br />
-      <br>
-      <router-link :to="sessionModeratorUrl"  tag="span" style="cursor: pointer" >
+      <br />
+      <router-link :to="sessionModeratorUrl" tag="span" style="cursor: pointer">
         Для модератора: {{ sessionModeratorUrl }}
       </router-link>
+      <a @click="copyLinkForModerator()" v-if="sessionModeratorUrl">Copy</a>
     </v-card-text>
     <v-card-actions>
       <v-spacer></v-spacer>
@@ -61,8 +63,8 @@ export default {
   methods: {
     ...mapActions(["GET_QUIZ", "GENERATE_SESSION"]),
     ...mapMutations(["SET_NEW_SESSION"]),
-    select(item){
-        this.SET_NEW_SESSION(item)
+    select(item) {
+      this.SET_NEW_SESSION(item);
     },
     generate() {
       this.GENERATE_SESSION({
@@ -70,9 +72,12 @@ export default {
         sessionName: this.newSessionName,
       });
     },
-    copyLinkForParticipant(){
-      this.$copyText(`localhost:8080/quiz/${this.sessionParticipantUrl}`) // место url наше название сайта
-    }
+    copyLinkForParticipant() {
+      this.$copyText(`localhost:8080/quiz/${this.sessionParticipantUrl}`); // место url наше название сайта
+    },
+    copyLinkForModerator() {
+      this.$copyText(`localhost:8080/quiz/${this.sessionModeratorUrl}`);
+    },
   },
   created() {
     this.GET_QUIZ({ id: this.$route.params.id, withSessions: true });

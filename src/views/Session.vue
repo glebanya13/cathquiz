@@ -35,6 +35,100 @@
             {{ showResult(item) }} 
           </template>
     </v-data-table>
+            <v-simple-table>
+              <template v-slot:default>
+                <thead>
+                  <tr>
+                    <th class="text-left">Имя</th>
+                    <th class="text-left">Ответы</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="p in SESSION_PARTICIPANTS" :key="p.id">
+                    <td>{{ p.name }} {{ p.surname }}</td>
+                    <td>
+                      {{
+                        p.answers
+                          ? p.answers.filter((a) => a.correct).length
+                          : 0
+                      }}
+                      из {{ p.answers ? p.answers.length : 0 }}
+                      <v-icon @click.stop="show = !show"
+                        >mdi-chevron-down</v-icon
+                      >
+                      <ul class="black--text" v-if="show">
+                        <li
+                          v-for="questions in CURRENT_QUIZ.questions"
+                          :key="questions.id"
+                        >
+                          {{ questions.question }}
+                          <v-chip
+                            class="ma-2"
+                            color="green"
+                            text-color="white"
+                            v-if="
+                              p.answers
+                                .filter((f) => f.questionId == questions.id)
+                                .map((f) => f.correct) == 'true'
+                            "
+                            >{{
+                              p.answers
+                                .filter((f) => f.questionId == questions.id)
+                                .map((f) => f.answer)
+                                .toString()
+                            }}</v-chip
+                          >
+                          <v-chip
+                            class="ma-2"
+                            color="red"
+                            text-color="white"
+                            v-if="
+                              p.answers
+                                .filter((f) => f.questionId == questions.id)
+                                .map((f) => f.correct) == 'false'
+                            "
+                            >{{
+                              p.answers
+                                .filter((f) => f.questionId == questions.id)
+                                .map((f) => f.answer)
+                                .toString()
+                            }}</v-chip
+                          >
+                          <!-- <v-chip class="ma-2" color="green" text-color="white" v-if="p.answers
+                              .filter((f) => f.questionId == questions.id)
+                              .map((f) => f.correct) == 'true'">
+                          Правильно
+                          </v-chip>
+                          <v-chip class="ma-2" color="red" text-color="white" v-if="p.answers
+                              .filter((f) => f.questionId == questions.id)
+                              .map((f) => f.correct) == 'false'">
+                          Неправильно
+                          </v-chip> -->
+                          <v-chip
+                            class="ma-2"
+                            color="primary"
+                            text-color="white"
+                            v-if="
+                              p.answers
+                                .filter((f) => f.questionId == questions.id)
+                                .map((f) => f.correct) == 'false'
+                            "
+                          >
+                            Правильный:
+                            {{
+                              questions.answers
+                                .filter((a) => a.correct == true)
+                                .map((a) => a.text)
+                                .toString()
+                            }}
+                          </v-chip>
+                        </li>
+                      </ul>
+                    </td>
+                  </tr>
+                </tbody>
+              </template>
+            </v-simple-table>
           </v-card-text>
           <v-card-actions>
             <v-btn @click="startRegistration()" text>Начать регистрацию (заново) </v-btn>
@@ -58,7 +152,8 @@ export default {
         {text: "Результат", value: "result", sortable: true}
       ],
       loading: true,
-      loadingText: "Начните регистрацию"
+      loadingText: "Начните регистрацию",
+      show: true,
     };
   },
   computed: {
