@@ -73,8 +73,9 @@ export default {
             commit('SET_EXIT_FOR_PARTICIPANTS', stop)
         },
         SAVE_RESULT(ctx, { quizId, sessionId, participantId, answers }) {
+            
             Vue.$db.doc(`quizzes/${quizId}/sessions/${sessionId}/participants/${participantId}`)
-                .update({ 'answers': answers })
+                .update({ 'answers': answers || [] })
         },
         START_FOLLOW_SESSION({ commit }, { quizId, sessionId }) {
             let stop = Vue.$db.doc(`quizzes/${quizId}/sessions/${sessionId}`)
@@ -176,10 +177,17 @@ export default {
             }
             commit('SET_CURRENT_SESSION', session)
         },
+        ARCHIVE_SESSION(ctx, { quizId, sessionId }) {
+            
+            Vue.$db.doc(`quizzes/${quizId}/sessions/${sessionId}`).update({
+                "archived": true
+            })
+        },
         GENERATE_SESSION({ commit }, { quizId, sessionName }) {
 
             Vue.$db.collection(`quizzes/${quizId}/sessions`).add({
-                name: sessionName
+                name: sessionName,
+                archived: false
             })
                 .then(function (sessionRef) {
                     console.log("Session written with ID: ", sessionRef.id);
@@ -216,13 +224,13 @@ export default {
                         ...docQuestion.data(),
                         id: docQuestion.id
                     }
-                    console.log('q', question)
                     quiz.questions.push(question)
                 });
 
             }
             if (withSessions) {
-                let sessions = await ref.collection('sessions').get()
+                let sessions = await ref.collection('sessions').
+                where("archived", "==", false).get()
                 sessions.forEach(docSession => {
                     let session = docSession.data()
                     session.id = docSession.id

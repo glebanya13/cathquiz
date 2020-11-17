@@ -69,72 +69,26 @@
                       <v-icon @click.stop="show = !show"
                         >mdi-chevron-down</v-icon
                       >
-                      <ul class="black--text" v-if="show">
+                      <ul class="black--text" >
                         <li
-                          v-for="questions in CURRENT_QUIZ.questions"
-                          :key="questions.id"
+                          v-for="(a, i) in p.answers"
+                          :key="a.question + a.answer + i"
                         >
-                          {{ questions.question }}
-                          <v-chip
+                        <v-chip
                             class="ma-2"
-                            color="green"
-                            text-color="white"
-                            v-if="
-                              p.answers
-                                .filter((f) => f.questionId == questions.id)
-                                .map((f) => f.correct) == 'true'
-                            "
-                            >{{
-                              p.answers
-                                .filter((f) => f.questionId == questions.id)
-                                .map((f) => f.answer)
-                                .toString()
-                            }}</v-chip
-                          >
-                          <v-chip
-                            class="ma-2"
-                            color="red"
-                            text-color="white"
-                            v-if="
-                              p.answers
-                                .filter((f) => f.questionId == questions.id)
-                                .map((f) => f.correct) == 'false'
-                            "
-                            >{{
-                              p.answers
-                                .filter((f) => f.questionId == questions.id)
-                                .map((f) => f.answer)
-                                .toString()
-                            }}</v-chip
-                          >
-                          <!-- <v-chip class="ma-2" color="green" text-color="white" v-if="p.answers
-                              .filter((f) => f.questionId == questions.id)
-                              .map((f) => f.correct) == 'true'">
-                          Правильно
-                          </v-chip>
-                          <v-chip class="ma-2" color="red" text-color="white" v-if="p.answers
-                              .filter((f) => f.questionId == questions.id)
-                              .map((f) => f.correct) == 'false'">
-                          Неправильно
-                          </v-chip> -->
-                          <v-chip
+                            :color="a.type == 'free' ? 'warning' : (a.correct ? 'green' : 'red')"
+                            text-color="white">
+                             {{ a.question }}</v-chip>
+                             <br>
+                             Выбран ответ: {{a.answer}}
+                              <v-chip
+                              v-if="!a.correct"
                             class="ma-2"
                             color="primary"
-                            text-color="white"
-                            v-if="
-                              p.answers
-                                .filter((f) => f.questionId == questions.id)
-                                .map((f) => f.correct) == 'false'
-                            "
-                          >
-                            Правильный:
-                            {{
-                              questions.answers
-                                .filter((a) => a.correct == true)
-                                .map((a) => a.text)
-                                .toString()
-                            }}
-                          </v-chip>
+                            text-color="white">
+                            Правильный: {{ a.correctAnswer }}</v-chip>
+                          <br>
+                          <br>
                         </li>
                       </ul>
                     </td>
@@ -167,14 +121,15 @@ export default {
     participants() {
       let ps = this.SESSION_PARTICIPANTS || [];
       ps.forEach(p => {
-        p.result = p.answers.filter((an) => an.correct).length
+        p.result = (p.answers || []).filter((an) => an.correct).length
       });
+
       return ps.length == 0
         ? []
         : ps.sort(
             (a, b) =>
-              a.answers.filter((an) => an.correct).length >
-              b.answers.filter((ba) => ba.correct).length
+              a.result >
+              b.result
           );
     },
   },
@@ -190,7 +145,7 @@ export default {
       return participant.birthday ? moment().diff(participant.birthday, 'years',false) : 0
     },
     showResult(participant){
-      return `${participant.answers ? participant.answers.filter(a => a.correct).length : 0} \\ ${participant.answers ? participant.answers.length : 0} \\ ${this.CURRENT_QUIZ.questions.length}`
+      return `${(participant.answers && participant.answers.length) ? participant.answers.filter(a => a.correct).length : 0} \\ ${(participant.answers && participant.answers.length)  ? participant.answers.length : 0} \\ ${this.CURRENT_QUIZ.questions.length}`
     },
     startRegistration(){
       this.loadingText = "Идет регистрация"
